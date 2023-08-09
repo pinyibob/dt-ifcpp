@@ -523,6 +523,20 @@ void Face<ndim>::getVertices(std::vector<vertex_t*>& verts) const {
 }
 
 template <unsigned ndim>
+void Face<ndim>::getUVs(std::vector<vertex_t*>& uvs) const {
+	uvs.clear();
+	//uvs.reserve(n_edges);
+	const edge_t* e = edge;
+	do {
+		if (e->uv) {
+			uvs.push_back(e->uv);
+		}
+
+		e = e->next;
+	} while (e != edge);
+}
+
+template <unsigned ndim>
 void Face<ndim>::getProjectedVertices(
     std::vector<carve::geom::vector<2> >& verts) const {
   verts.clear();

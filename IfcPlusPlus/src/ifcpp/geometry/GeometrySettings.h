@@ -130,6 +130,16 @@ public:
 		return m_epsCoplanarAngle;
 	}
 
+	void setEpsilonCoplanarDistance(double eps)
+	{
+		m_epsCoplanarDistance = eps;
+	}
+
+	double getEpsilonCoplanarDistance()
+	{
+		return m_epsCoplanarDistance;
+	}
+
 	std::set<uint32_t> m_render_object_filter;
 	size_t m_maxNumFaceEdges = 10000;
 	bool m_mergeAlignedEdges = true;
@@ -147,6 +157,7 @@ protected:
 	bool m_render_bounding_box = false;
 	double m_min_triangle_area = 1e-9;
 	double m_epsilonMergePoints = 1.5e-8;
+	double m_epsCoplanarDistance = 1.5e-8;
 	double m_epsCoplanarAngle = 1e-10;
 
 	std::function<int(double)> m_num_vertices_per_circle_given_radius = [&](double radius)

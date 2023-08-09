@@ -54,7 +54,7 @@ class GeometryConverter : public StatusCallback
 protected:
 	shared_ptr<BuildingModel>				m_ifc_model;
 	shared_ptr<GeometrySettings>			m_geom_settings;
-	shared_ptr<RepresentationConverter>		m_representation_converter;
+	shared_ptr<LabRepresentationConverter>		m_representation_converter;
 
 	std::map<std::string, shared_ptr<ProductShapeData> >	m_product_shape_data;
 	std::map<std::string, shared_ptr<BuildingObject> >		m_map_outside_spatial_structure;
@@ -71,7 +71,7 @@ protected:
 public:
 	// getters and setters
 	shared_ptr<BuildingModel>&							getBuildingModel() { return m_ifc_model; }
-	shared_ptr<RepresentationConverter>&				getRepresentationConverter() { return m_representation_converter; }
+	shared_ptr<LabRepresentationConverter>&				getRepresentationConverter() { return m_representation_converter; }
 	shared_ptr<GeometrySettings>&						getGeomSettings() { return m_geom_settings; }
 	std::map<std::string, shared_ptr<ProductShapeData> >&	getShapeInputData() { return m_product_shape_data; }
 	std::map<std::string, shared_ptr<BuildingObject> >&		getObjectsOutsideSpatialStructure() { return m_map_outside_spatial_structure; }
@@ -88,7 +88,7 @@ public:
 		m_geom_settings = shared_ptr<GeometrySettings>( new GeometrySettings() );
 		resetNumVerticesPerCircle();
 		shared_ptr<UnitConverter>& unit_converter = m_ifc_model->getUnitConverter();
-		m_representation_converter = shared_ptr<RepresentationConverter>( new RepresentationConverter( m_geom_settings, unit_converter ) );
+		m_representation_converter = shared_ptr<LabRepresentationConverter>( new LabRepresentationConverter( m_geom_settings, unit_converter ) );
 
 		// redirect all messages to this->messageTarget
 		m_ifc_model->setMessageTarget( this );

@@ -199,6 +199,24 @@ public:
 		}
 	}
 
+	void convertUVList(const std::vector<std::vector<shared_ptr<IfcParameterValue> > >& uvList, std::vector<vec3>& loop)
+	{
+
+		//const double length_factor = m_unit_converter->getLengthInMeterFactor();
+		//uv_list->m_TexCoordsList
+		for (size_t ii = 0; ii < uvList.size(); ++ii)
+		{
+
+			const std::vector<shared_ptr<IfcParameterValue> >& coords1 = uvList[ii];
+			if (coords1.size() > 1)
+			{
+				double x = coords1[0]->m_value;
+				double y = coords1[1]->m_value;
+				loop.push_back(carve::geom::VECTOR(x, y, 0.0));
+			}
+		}
+	}
+
 	static bool convertIfcVertex(const shared_ptr<IfcVertex>& vertex, vec3& point_result, const double length_factor)
 	{
 		shared_ptr<IfcVertexPoint> vertex_point = dynamic_pointer_cast<IfcVertexPoint>(vertex);

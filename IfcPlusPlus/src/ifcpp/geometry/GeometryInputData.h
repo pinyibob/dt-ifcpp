@@ -446,6 +446,7 @@ void polyhedronFromMeshSet(const shared_ptr<carve::mesh::MeshSet<3>>& meshset, P
 void polyhedronFromMeshSet(const shared_ptr<carve::mesh::MeshSet<3>>& meshset, const std::set<carve::mesh::Face<3>* >& setSkipFaces, PolyInputCache3D& polyInput);
 void polyhedronFromMeshSet(const shared_ptr<carve::mesh::MeshSet<3>>& meshset, const std::set<carve::mesh::Face<3>* >& setSkipFaces, const std::set<carve::mesh::Face<3>* >& setFlipFaces, PolyInputCache3D& polyInput);
 
+class RepresentationData;
 class ProductShapeData;
 
 /**
@@ -468,6 +469,7 @@ public:
 	std::vector<shared_ptr<carve::mesh::MeshSet<3> > >		m_meshsets_open;
 	std::vector<shared_ptr<AppearanceData> >				m_vec_item_appearances;
 	std::vector<shared_ptr<TextItemData> >					m_vec_text_literals;
+	weak_ptr<RepresentationData>							m_parent_representation;  // Pointer to representation object that this item belongs to
 	shared_ptr<IFC4X3::IfcRepresentationItem>				m_ifc_item;
 	std::vector<shared_ptr<carve::input::VertexData> >	m_vertex_points;
 	std::set<int> m_usedInRepresentations;
@@ -874,12 +876,122 @@ public:
 	}
 };
 
+class RepresentationData
+{
+public:
+	RepresentationData() {}
+	~RepresentationData() {}
+
+	weak_ptr<IFC4X3::IfcRepresentation>				m_ifc_representation;
+	std::vector<shared_ptr<ItemShapeData> >			m_vec_item_data;
+	std::vector<shared_ptr<AppearanceData> >		m_vec_representation_appearances;
+	std::string										m_representation_identifier;
+	std::string										m_representation_type;
+	weak_ptr<ProductShapeData>						m_parent_product;  // Pointer to product object that this representation belongs to
+
+	shared_ptr<RepresentationData> getRepresentationDataDeepCopy()
+	{
+		shared_ptr<RepresentationData> copy_representation(new RepresentationData());
+		copy_representation->m_ifc_representation = m_ifc_representation;
+		for (size_t ii = 0; ii < m_vec_item_data.size(); ++ii)
+		{
+			shared_ptr<ItemShapeData>& item_data = m_vec_item_data[ii];
+			copy_representation->m_vec_item_data.push_back(item_data->getItemShapeDataDeepCopy());
+		}
+		std::copy(m_vec_representation_appearances.begin(), m_vec_representation_appearances.end(), std::back_inserter(copy_representation->m_vec_representation_appearances));
+		return copy_representation;
+	}
+
+	void addChildItem(shared_ptr<ItemShapeData>& item_data, shared_ptr<RepresentationData>& ptr_self)
+	{
+		if (ptr_self.get() != this)
+		{
+			std::cout << __FUNCTION__ << "ptr_self != this" << std::endl;
+		}
+		m_vec_item_data.push_back(item_data);
+		item_data->m_parent_representation = ptr_self;
+	}
+
+	void appendRepresentationData(shared_ptr<RepresentationData>& other, shared_ptr<RepresentationData>& ptr_self)
+	{
+		if (ptr_self.get() != this)
+		{
+			std::cout << __FUNCTION__ << "ptr_self != this" << std::endl;
+		}
+		for (auto item_data : other->m_vec_item_data)
+		{
+			item_data->m_parent_representation = ptr_self;
+			m_vec_item_data.push_back(item_data);
+		}
+		// TODO: Check if placement is same
+		std::copy(other->m_vec_representation_appearances.begin(), other->m_vec_representation_appearances.end(), std::back_inserter(m_vec_representation_appearances));
+	}
+
+	void addAppearance(shared_ptr<AppearanceData>& appearance)
+	{
+		if (!appearance)
+		{
+			return;
+		}
+		int append_id = appearance->m_step_style_id;
+		for (size_t ii = 0; ii < m_vec_representation_appearances.size(); ++ii)
+		{
+			shared_ptr<AppearanceData>& appearance = m_vec_representation_appearances[ii];
+			if (appearance->m_step_style_id == append_id)
+			{
+				return;
+			}
+		}
+		m_vec_representation_appearances.push_back(appearance);
+	}
+
+	void clearAppearanceData()
+	{
+		m_vec_representation_appearances.clear();
+	}
+
+	void clearAll()
+	{
+		m_vec_representation_appearances.clear();
+		m_ifc_representation.reset();
+		m_vec_item_data.clear();
+		m_representation_identifier = "";
+		m_representation_type = "";
+	}
+
+	void applyTransformToRepresentation(const carve::math::Matrix& matrix, bool matrix_identity_checked = false)
+	{
+		if (!matrix_identity_checked)
+		{
+			if (GeomUtils::isMatrixIdentity(matrix))
+			{
+				return;
+			}
+		}
+		for (size_t i_item = 0; i_item < m_vec_item_data.size(); ++i_item)
+		{
+			m_vec_item_data[i_item]->applyTransformToItem(matrix, matrix_identity_checked);
+		}
+	}
+
+	void computeBoundingBox(carve::geom::aabb<3>& bbox) const
+	{
+		for (size_t ii = 0; ii < m_vec_item_data.size(); ++ii)
+		{
+			const shared_ptr<ItemShapeData>& item_data = m_vec_item_data[ii];
+			std::set<ItemShapeData*> setVisited;
+			item_data->computeBoundingBox(bbox, setVisited);
+		}
+	}
+};
+
 class ProductShapeData 
 {
 public:
 	std::string m_entity_guid;
 	weak_ptr<IFC4X3::IfcObjectDefinition>			m_ifc_object_definition;
 	weak_ptr<IFC4X3::IfcObjectPlacement>			m_object_placement;
+	std::vector<shared_ptr<RepresentationData> >	m_vec_representations;
 	bool											m_added_to_spatial_structure = false;
 	weak_ptr<ProductShapeData>						m_parent;
 	std::vector<shared_ptr<TransformData> >			m_vec_transforms;

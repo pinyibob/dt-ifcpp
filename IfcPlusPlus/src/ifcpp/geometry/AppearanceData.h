@@ -39,4 +39,7 @@ public:
 	bool m_complete = false;
 	shared_ptr<IFC4X3::IfcTextStyle> m_text_style;
 	GeometryTypeEnum m_apply_to_geometry_type = GEOM_TYPE_UNDEFINED;
+
+	std::string m_imgdata;
+	std::string m_format;
 };

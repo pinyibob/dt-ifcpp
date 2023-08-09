@@ -68,7 +68,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OU
 #include "FaceConverter.h"
 #include "ProfileCache.h"
 
-class RepresentationConverter : public StatusCallback
+class LabRepresentationConverter : public StatusCallback
 {
 protected:
 	shared_ptr<GeometrySettings>		m_geom_settings;
@@ -84,7 +84,7 @@ protected:
 	shared_ptr<SolidModelConverter>		m_solid_converter;
 	
 public:
-	RepresentationConverter( shared_ptr<GeometrySettings> geom_settings, shared_ptr<UnitConverter> unit_converter )
+	LabRepresentationConverter( shared_ptr<GeometrySettings> geom_settings, shared_ptr<UnitConverter> unit_converter )
 		: m_geom_settings( geom_settings ), m_unit_converter( unit_converter )
 	{
 		m_styles_converter = shared_ptr<StylesConverter>( new StylesConverter() );
@@ -110,7 +110,7 @@ public:
 		m_solid_converter->setMessageTarget( this );
 	}
 
-	virtual ~RepresentationConverter()
+	virtual ~LabRepresentationConverter()
 	{
 		clearCache();
 	}

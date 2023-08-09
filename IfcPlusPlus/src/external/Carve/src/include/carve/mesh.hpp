@@ -136,6 +136,8 @@ namespace carve {
 		public:
 			typedef Vertex<ndim> vertex_t;
 			typedef Face<ndim> face_t;
+			
+			vertex_t* uv = nullptr;
 
 			vertex_t* vert = nullptr;
 			face_t* face = nullptr;
@@ -361,6 +363,7 @@ namespace carve {
 			void init(vertex_t* a, vertex_t* b, vertex_t* c, vertex_t* d);
 
 			void getVertices(std::vector<vertex_t*>& verts) const;
+			void getUVs(std::vector<vertex_t*>& uvs) const;
 			void getProjectedVertices(std::vector<carve::geom::vector<2> >& verts) const;
 
 			projection_mapping projector() const { return projection_mapping(project); }
