@@ -924,7 +924,15 @@ public:
 #endif
 	}
 
-#if 0
+#if 1
+	static void addFaceCheckIndexes(const vec3& v0, const vec3& v1, const vec3& v2, const vec3& s0, const vec3& s1, const vec3& s2, PolyInputCache3D& meshOut, double CARVE_EPSILON)
+	{
+		int idxA = meshOut.addPoint(v0,s0);
+		int idxB = meshOut.addPoint(v1,s1);
+		int idxC = meshOut.addPoint(v2,s2);
+		addTriangleCheckDegenerate(idxA, idxB, idxC, meshOut, CARVE_EPSILON);
+	}
+
 	static void createTriangulated3DFace(const std::vector<std::vector<vec3> >& inputBounds3D, const std::vector<std::vector<vec3> >& uvBounds3D, PolyInputCache3D& meshOut, GeomProcessingParams& params)
 	{
 		double CARVE_EPSILON = params.epsMergePoints;

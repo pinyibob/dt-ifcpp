@@ -237,6 +237,8 @@ namespace carve {
 
 			Edge(vertex_t* _vert, face_t* _face);
 
+			Edge(vertex_t* _vert, vertex_t* _uv, face_t* _face);
+
 			~Edge();
 		};
 
@@ -348,6 +350,9 @@ namespace carve {
 			template <typename iter_t>
 			void loopFwd(iter_t vbegin, iter_t vend);
 
+			template <typename iter_t>
+			void loopFwd(iter_t vbegin, iter_t vend, iter_t ustart);
+
 			// build an edge loop in reverse orientation from an iterator pair
 			template <typename iter_t>
 			void loopRev(iter_t vbegin, iter_t vend);
@@ -355,6 +360,9 @@ namespace carve {
 			// initialize a face from an ordered list of vertices.
 			template <typename iter_t>
 			void init(iter_t begin, iter_t end);
+
+			template <typename iter_t>
+			void init(iter_t begin, iter_t end, iter_t start);
 
 			// initialization of a triangular face.
 			void init(vertex_t* a, vertex_t* b, vertex_t* c);
@@ -416,6 +424,12 @@ namespace carve {
 			Face(iter_t begin, iter_t end, double CARVE_EPSILON) : edge(nullptr), n_edges(0), mesh(nullptr)
 			{
 				init(begin, end);
+				recalc(CARVE_EPSILON);
+			}
+
+			template <typename iter_t>
+			Face(iter_t begin, iter_t end, iter_t start, double CARVE_EPSILON) : edge(nullptr), n_edges(0), mesh(nullptr) {
+				init(begin, end, start);
 				recalc(CARVE_EPSILON);
 			}
 
@@ -730,6 +744,7 @@ namespace carve {
 			typedef carve::geom::aabb<ndim> aabb_t;
 
 			std::vector<vertex_t> vertex_storage;
+			std::vector<vertex_t> uv_storage;
 			std::vector<mesh_t*> meshes;
 
 		public:
@@ -829,7 +844,7 @@ namespace carve {
 			}
 
 			MeshSet(const std::vector<typename vertex_t::vector_t>& points, size_t n_faces, const std::vector<int>& face_indices, double CARVE_EPSILON, const MeshOptions& opts = MeshOptions());
-
+			MeshSet(const std::vector<typename vertex_t::vector_t>& points,const std::vector<typename vertex_t::vector_t>& uvs,size_t n_faces, const std::vector<int>& face_indices, double CARVE_EPSILON, const MeshOptions& opts = MeshOptions());
 			// Construct a mesh set from a set of disconnected faces. Takes
 			// possession of the face pointers.
 			MeshSet(std::vector<face_t*>& faces, const MeshOptions& opts = MeshOptions());

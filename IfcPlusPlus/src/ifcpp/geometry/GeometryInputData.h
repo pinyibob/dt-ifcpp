@@ -430,6 +430,243 @@ public:
 		return vertex_index;
 	}
 
+	size_t addPointZ(const vec3& pt, const vec3& uv, std::map<double, size_t>& map_z)
+	{
+		double vertex_z = pt.z;
+
+		auto low = map_z.lower_bound(vertex_z);
+		if (low == map_z.end())
+		{
+			if (map_z.size() > 0)
+			{
+				double lastElement = map_z.rbegin()->first;
+				double dz = lastElement - vertex_z;
+				if (std::abs(dz) <= m_eps)
+				{
+					size_t existingIndex = map_z.rbegin()->second;
+					return existingIndex;
+				}
+			}
+
+			size_t vertex_index = m_poly_data->addVertex(pt,uv);
+			map_z.insert({ { vertex_z, vertex_index } });
+			return vertex_index;
+		}
+		else if (low == map_z.begin())
+		{
+			double existingZ = low->first;
+			double dz = existingZ - vertex_z;
+			if (std::abs(dz) <= m_eps)
+			{
+				size_t& existingIndex = low->second;
+				return existingIndex;
+			}
+			else
+			{
+				size_t vertex_index = m_poly_data->addVertex(pt, uv);
+				map_z.insert({ { vertex_z, vertex_index } });
+				return vertex_index;
+			}
+		}
+		else
+		{
+			auto prev = std::prev(low);
+			double dzPrev = vertex_z - prev->first;
+			double dzLow = low->first - vertex_z;
+			if (std::abs(dzPrev) < std::abs(dzLow))
+			{
+				if (std::abs(dzPrev) <= m_eps)
+				{
+					size_t& existingIndex = prev->second;
+					return existingIndex;
+				}
+				else
+				{
+					size_t vertex_index = m_poly_data->addVertex(pt, uv);
+					map_z.insert({ { vertex_z, vertex_index } });
+					return vertex_index;
+				}
+			}
+			else
+			{
+				if (std::abs(dzLow) <= m_eps)
+				{
+					size_t& existingIndex = low->second;
+					return existingIndex;
+				}
+				else
+				{
+					size_t vertex_index = m_poly_data->addVertex(pt, uv);
+					map_z.insert({ { vertex_z, vertex_index } });
+					return vertex_index;
+				}
+			}
+		}
+	}
+
+	size_t addPointYZ(const vec3& pt, const vec3& uv, std::map<double, std::map<double, size_t> >& map_yz)
+	{
+		double vertex_y = pt.y;
+		double vertex_z = pt.z;
+
+		auto low = map_yz.lower_bound(vertex_y);
+		if (low == map_yz.end())
+		{
+			if (map_yz.size() > 0)
+			{
+				double lastElement = map_yz.rbegin()->first;
+				double dy = lastElement - vertex_y;
+				if (std::abs(dy) < m_eps)
+				{
+					auto& map_z = map_yz.rbegin()->second;
+					return addPointZ(pt, uv, map_z);
+				}
+			}
+
+			size_t vertex_index = m_poly_data->addVertex(pt, uv);
+			map_yz.insert({ { vertex_y, {{ vertex_z, vertex_index }} } });
+			return vertex_index;
+		}
+		else if (low == map_yz.begin())
+		{
+			double existingY = low->first;
+			double dy = existingY - vertex_y;
+			if (std::abs(dy) <= m_eps)
+			{
+				std::map<double, size_t>& map_z = low->second;
+				return addPointZ(pt, uv, map_z);
+			}
+			else
+			{
+				size_t vertex_index = m_poly_data->addVertex(pt, uv);
+				map_yz.insert({ {  vertex_y, {{ vertex_z, vertex_index }} } });
+				return vertex_index;
+			}
+		}
+		else
+		{
+			auto prev = std::prev(low);
+			double dyPrev = vertex_y - prev->first;
+			double dyLow = low->first - vertex_y;
+			if (std::abs(dyPrev) <= std::abs(dyLow))
+			{
+				if (std::abs(dyPrev) <= m_eps)
+				{
+					std::map<double, size_t>& map_z = prev->second;
+					return addPointZ(pt, uv, map_z);
+				}
+				else
+				{
+					size_t vertex_index = m_poly_data->addVertex(pt, uv);
+					map_yz.insert({ { vertex_y, {{ vertex_z, vertex_index }} } });
+					return vertex_index;
+				}
+			}
+			else
+			{
+				if (std::abs(dyLow) <= m_eps)
+				{
+					std::map<double, size_t>& map_z = low->second;
+					return addPointZ(pt, uv, map_z);
+				}
+				else
+				{
+					size_t vertex_index = m_poly_data->addVertex(pt,uv);
+					map_yz.insert({ { vertex_y, {{ vertex_z, vertex_index }} } });
+					return vertex_index;
+				}
+			}
+		}
+	}
+
+	size_t addPoint(const vec3& pt,const vec3& uv)
+	{
+		double vertex_x = pt.x;
+		double vertex_y = pt.y;
+		double vertex_z = pt.z;
+
+		if (m_eps > EPS_M16)
+		{
+			if (m_existing_vertices_coords.size() > 0)
+			{
+				// std::map::lower_bound returns an iterator pointing to the first element that is equal or greater than key
+				auto low = m_existing_vertices_coords.lower_bound(vertex_x);
+				if (low == m_existing_vertices_coords.end())
+				{
+					if (m_existing_vertices_coords.size() > 0)
+					{
+						double lastElement = m_existing_vertices_coords.rbegin()->first;
+						double dx = lastElement - vertex_x;
+						if (std::abs(dx) <= m_eps)
+						{
+							auto& map_yz = m_existing_vertices_coords.rbegin()->second;
+							return addPointYZ(pt,uv, map_yz);
+						}
+					}
+
+					size_t vertex_index = m_poly_data->addVertex(pt,uv);
+					m_existing_vertices_coords.insert({ vertex_x, {{ vertex_y, {{ vertex_z, vertex_index }} } } });
+					return vertex_index;
+				}
+				else if (low == m_existing_vertices_coords.begin())
+				{
+					double existingX = low->first;
+					double dx = existingX - vertex_x;
+					if (std::abs(dx) <= m_eps)
+					{
+						std::map<double, std::map<double, size_t> >& map_yz = low->second;
+						return addPointYZ(pt, uv, map_yz);
+					}
+					else
+					{
+						size_t vertex_index = m_poly_data->addVertex(pt, uv);
+						m_existing_vertices_coords.insert({ vertex_x, {{ vertex_y, {{ vertex_z, vertex_index }} } } });
+						return vertex_index;
+					}
+				}
+				else
+				{
+					auto prev = std::prev(low);
+					double dxPrev = vertex_x - prev->first;
+					double dxLow = low->first - vertex_x;
+					if (std::abs(dxPrev) < std::abs(dxLow))
+					{
+						if (std::abs(dxPrev) <= m_eps)
+						{
+							std::map<double, std::map<double, size_t> >& map_yz = prev->second;
+							return addPointYZ(pt, uv, map_yz);
+						}
+						else
+						{
+							size_t vertex_index = m_poly_data->addVertex(pt, uv);
+							m_existing_vertices_coords.insert({ vertex_x, {{ vertex_y, {{ vertex_z, vertex_index }} } } });
+							return vertex_index;
+						}
+					}
+					else
+					{
+						if (std::abs(dxLow) <= m_eps)
+						{
+							std::map<double, std::map<double, size_t> >& map_yz = low->second;
+							return addPointYZ(pt, uv, map_yz);
+						}
+						else
+						{
+							size_t vertex_index = m_poly_data->addVertex(pt, uv);
+							m_existing_vertices_coords.insert({ vertex_x, {{ vertex_y, {{ vertex_z, vertex_index }} } } });
+							return vertex_index;
+						}
+					}
+				}
+			}
+		}
+
+		// add point to polyhedron
+		size_t vertex_index = m_poly_data->addVertex(pt, uv);
+		m_existing_vertices_coords.insert({ vertex_x, {{ vertex_y, {{ vertex_z, vertex_index }} } } });
+		return vertex_index;
+	}
+
 	void clearAllData()
 	{
 		m_poly_data->clearFaces();
@@ -1008,11 +1245,11 @@ public:
 	shared_ptr<ProductShapeData> getDeepCopy()
 	{
 		shared_ptr<ProductShapeData> copy_data( new ProductShapeData(m_entity_guid) );
-		for( size_t item_i = 0; item_i < m_geometric_items.size(); ++item_i )
+		for( size_t item_i = 0; item_i < m_vec_representations.size(); ++item_i )
 		{
-			shared_ptr<ItemShapeData>& representation_data = m_geometric_items[item_i];
-			shared_ptr<ItemShapeData> representation_data_copy = representation_data->getItemShapeDataDeepCopy();
-			copy_data->addGeometricItem(representation_data_copy, copy_data);
+			shared_ptr<RepresentationData>& representation_data = m_vec_representations[item_i];
+			shared_ptr<RepresentationData> representation_data_copy = representation_data->getRepresentationDataDeepCopy();
+			copy_data->m_vec_representations.push_back( representation_data_copy );
 		}
 
 		std::copy( m_vec_product_appearances.begin(), m_vec_product_appearances.end(), std::back_inserter( copy_data->m_vec_product_appearances ) );
@@ -1073,10 +1310,10 @@ public:
 		m_vec_product_appearances.clear();
 		m_object_placement.reset();
 		
-		for( size_t item_i = 0; item_i < m_geometric_items.size(); ++item_i )
+		for( size_t item_i = 0; item_i < m_vec_representations.size(); ++item_i )
 		{
-			shared_ptr<ItemShapeData>& item_data = m_geometric_items[item_i];
-			item_data->clearMeshGeometry();
+			shared_ptr<RepresentationData>& item_data = m_vec_representations[item_i];
+			item_data->m_vec_item_data.clear();
 		}
 		
 		m_added_to_spatial_structure = false;
@@ -1088,7 +1325,7 @@ public:
 		m_ifc_object_definition.reset();
 		m_object_placement.reset();
 		m_vec_children.clear();
-		m_geometric_items.clear();
+		m_vec_representations.clear();
 		m_added_to_spatial_structure = false;
 	}
 	
@@ -1240,9 +1477,9 @@ public:
 				return;
 			}
 		}
-		for( size_t i_item = 0; i_item < m_geometric_items.size(); ++i_item )
+		for( size_t i_item = 0; i_item < m_vec_representations.size(); ++i_item )
 		{
-			m_geometric_items[i_item]->applyTransformToItem( matrix, true );
+			m_vec_representations[i_item]->applyTransformToRepresentation( matrix, true );
 		}
 
 		if( applyToChildren )
@@ -1384,10 +1621,10 @@ static carve::geom::aabb<3> computeBoundingBoxLocalCoords( const shared_ptr<Prod
 {
 	carve::geom::aabb<3> bbox;
 	std::set<ItemShapeData*> setVisited;
-	for( auto item : productData->m_geometric_items)
+	for( auto item : productData->m_vec_representations)
 	{
 		carve::geom::aabb<3> repBBox;
-		item->computeBoundingBox(repBBox, setVisited);
+		item->computeBoundingBox(repBBox);
 		if( bbox.isEmpty() )
 		{
 			bbox = repBBox;
@@ -1437,10 +1674,10 @@ static carve::geom::aabb<3> computeBoundingBox(shared_ptr<ProductShapeData>& pro
 	}
 
 	std::set<ItemShapeData*> setVisited;
-	for( auto item : productData->m_geometric_items)
+	for( auto item : productData->m_vec_representations)
 	{
 		carve::geom::aabb<3> repBBox;
-		item->computeBoundingBox(repBBox, setVisited);
+		item->computeBoundingBox(repBBox);
 
 		if( repBBox.isEmpty() )
 		{

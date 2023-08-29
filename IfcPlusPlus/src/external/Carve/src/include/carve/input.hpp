@@ -94,6 +94,7 @@ namespace carve {
 
 		struct VertexData : public Data {
 			std::vector<carve::geom3d::Vector> points;
+			std::vector<carve::geom3d::Vector> uvs;
 
 			VertexData() : Data() {}
 
@@ -108,6 +109,19 @@ namespace carve {
 			size_t addVertex(carve::geom3d::Vector point) {
 				size_t index = points.size();
 				points.push_back(point);
+				return index;
+			}
+			
+			size_t addVertex(carve::geom3d::Vector point, carve::geom3d::Vector uv) {
+				size_t index = points.size();
+				points.push_back(point);
+				uvs.push_back(uv);
+				return index;
+			}
+
+			size_t addUV(carve::geom3d::Vector uv) {
+				size_t index = uvs.size();
+				uvs.push_back(uv);
 				return index;
 			}
 
@@ -180,7 +194,7 @@ namespace carve {
 				if( i != options.end() ) {
 					opts.avoid_cavities(_bool((*i).second));
 				}
-				return new carve::mesh::MeshSet<3>(points, faceCount, faceIndices, CARVE_EPSILON, opts);
+				return new carve::mesh::MeshSet<3>(points, uvs, faceCount, faceIndices, CARVE_EPSILON, opts);
 			}
 		};
 

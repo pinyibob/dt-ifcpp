@@ -244,5 +244,5 @@ public:
 /// \param entity				IFC entity that is currently being processed
 /// \param ignoreOpenEdgesInResult	If true, the result is kept even with open edges (good for visualization). If false, the result will be the input mesh in case open edges occur after triangulation (good for further boolean operations)
 	static void simplifyMeshSet(shared_ptr<carve::mesh::MeshSet<3> >& meshset, const GeomProcessingParams& params, bool triangulateResult, bool shouldBeClosedManifold);
-
+	
 };

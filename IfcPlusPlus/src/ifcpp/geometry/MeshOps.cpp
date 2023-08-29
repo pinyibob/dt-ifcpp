@@ -1004,8 +1004,17 @@ void MeshOps::retriangulateMeshSetForBoolOp_carve(shared_ptr<carve::mesh::MeshSe
 			for (size_t i3 = 0; i3 < face->n_edges; ++i3)
 			{
 				const vec3& v = edge->vert->v;
+				auto uvp = edge->uv;
 				edge = edge->next;
-				int vertex_index = poly_cache.addPoint(v);
+				int vertex_index = -1;
+				if(uvp)
+				{
+					vertex_index= poly_cache.addPoint(v, uvp->v);
+				}
+				else{
+				 	vertex_index= poly_cache.addPoint(v);
+				}
+				
 				if (i_vert >= map_merged_idx.size())
 				{
 					map_merged_idx.resize(i_vert + 1, 0);

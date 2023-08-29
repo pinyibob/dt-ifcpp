@@ -295,6 +295,12 @@ Edge<ndim>::Edge(vertex_t* _vert, face_t* _face)
 }
 
 template <unsigned ndim>
+Edge<ndim>::Edge(vertex_t* _vert, vertex_t* _uv, face_t* _face)
+	: vert(_vert), uv(_uv), face(_face), prev(nullptr), next(nullptr), rev(nullptr) {
+	prev = next = this;
+}
+
+template <unsigned ndim>
 Edge<ndim>::~Edge() {}
 
 template <unsigned ndim>
@@ -455,6 +461,26 @@ void Face<ndim>::loopFwd(iter_t begin, iter_t end) {
 
 template <unsigned ndim>
 template <typename iter_t>
+void Face<ndim>::loopFwd(iter_t begin, iter_t end, iter_t uvstart) {
+	clearEdges();
+	if (begin == end) {
+		return;
+	}
+	edge = new edge_t(*begin, *uvstart, this);
+	++n_edges;
+	++begin;
+	++uvstart;
+	while (begin != end) {
+		edge_t* e = new edge_t(*begin, *uvstart, this);
+		e->insertAfter(edge->prev);
+		++n_edges;
+		++begin;
+		++uvstart;
+	}
+}
+
+template <unsigned ndim>
+template <typename iter_t>
 void Face<ndim>::loopRev(iter_t begin, iter_t end) {
   clearEdges();
   if (begin == end) {
@@ -475,6 +501,12 @@ template <unsigned ndim>
 template <typename iter_t>
 void Face<ndim>::init(iter_t begin, iter_t end) {
   loopFwd(begin, end);
+}
+
+template <unsigned ndim>
+template <typename iter_t>
+void Face<ndim>::init(iter_t begin, iter_t end, iter_t start) {
+	loopFwd(begin, end, start);
 }
 
 template <unsigned ndim>
@@ -990,6 +1022,63 @@ MeshSet<ndim>::MeshSet( const std::vector<typename MeshSet<ndim>::vertex_t::vect
   for (size_t i = 0; i < meshes.size(); ++i) {
     meshes[i]->meshset = this;
   }
+}
+
+template <unsigned ndim>
+MeshSet<ndim>::MeshSet(
+	const std::vector<typename MeshSet<ndim>::vertex_t::vector_t>& points,
+	const std::vector<typename MeshSet<ndim>::vertex_t::vector_t>& uvs,
+	size_t n_faces, const std::vector<int>& face_indices,
+	double CARVE_EPSILON,
+	const MeshOptions& opts) {
+	vertex_storage.reserve(points.size());
+	uv_storage.reserve(uvs.size());
+	std::vector<face_t*> faces;
+	faces.reserve(n_faces);
+	for (size_t i = 0; i < points.size(); ++i) {
+		vertex_storage.push_back(vertex_t(points[i]));
+		//uv_storage.push_back(vertex_t(uvs[i]));
+	}
+
+	for (size_t i = 0; i < uvs.size(); ++i) {
+		//vertex_storage.push_back(vertex_t(points[i]));
+		uv_storage.push_back(vertex_t(uvs[i]));
+	}
+
+	std::vector<vertex_t*> v;
+	std::vector<vertex_t*> uv;
+	size_t p = 0;
+	for (size_t i = 0; i < n_faces; ++i) {
+		CARVE_ASSERT(face_indices[p] > 1);
+
+		const size_t N = (size_t)face_indices[p++];
+		v.clear();
+		v.reserve(N);
+		uv.clear();
+		uv.reserve(N);
+		for (size_t j = 0; j < N; ++j) {
+			v.push_back(&vertex_storage[face_indices[p]]);
+			if (uvs.size() != 0) {
+				uv.push_back(&uv_storage[face_indices[p]]);
+			}
+			p++;
+
+		}
+		//faces.push_back(new face_t(v.begin(), v.end()));
+		if (uvs.size() == 0) {
+			faces.push_back(new face_t(v.begin(), v.end(), CARVE_EPSILON));
+		}
+		else {
+			faces.push_back(new face_t(v.begin(), v.end(), uv.begin(), CARVE_EPSILON));
+		}
+
+	}
+	CARVE_ASSERT(p == face_indices.size());
+	mesh_t::create(faces.begin(), faces.end(), meshes, opts);
+
+	for (size_t i = 0; i < meshes.size(); ++i) {
+		meshes[i]->meshset = this;
+	}
 }
 
 template <unsigned ndim>
