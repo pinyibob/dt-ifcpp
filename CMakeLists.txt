@@ -67,5 +67,5 @@ INSTALL(
 #  ADD_SUBDIRECTORY (examples/LoadFileExample)
 #ENDIF()
 #IF(BUILD_VIEWER_APPLICATION)
- # ADD_SUBDIRECTORY (examples/SimpleViewerExampleQt)
-##ENDIF()
+#  ADD_SUBDIRECTORY (examples/SimpleViewerExampleQt)
+#ENDIF()
