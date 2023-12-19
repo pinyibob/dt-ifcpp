@@ -62,10 +62,10 @@ INSTALL(
   FILES ${config_file_output}
   DESTINATION ${IFCPP_CONFIG_DIR})
   
-IF(BUILD_CONSOLE_APPLICATION)
-  ADD_SUBDIRECTORY (examples/CreateIfcWallAndWriteFile)
-  ADD_SUBDIRECTORY (examples/LoadFileExample)
-ENDIF()
-IF(BUILD_VIEWER_APPLICATION)
-  ADD_SUBDIRECTORY (examples/SimpleViewerExampleQt)
-ENDIF()
+#IF(BUILD_CONSOLE_APPLICATION)
+#  ADD_SUBDIRECTORY (examples/CreateIfcWallAndWriteFile)
+#  ADD_SUBDIRECTORY (examples/LoadFileExample)
+#ENDIF()
+#IF(BUILD_VIEWER_APPLICATION)
+ # ADD_SUBDIRECTORY (examples/SimpleViewerExampleQt)
+##ENDIF()
